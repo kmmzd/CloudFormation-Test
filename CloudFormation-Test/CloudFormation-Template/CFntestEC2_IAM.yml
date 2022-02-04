@@ -1,0 +1,167 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "This template create EC2,IamRoke for EC2"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - 
+        Label:
+          default: EC2 common Configuration 
+        Parameters:
+          - EnvType
+          - LatestAmiId
+          - KeyName
+      - 
+        Label: 
+          default: EC2 1a Configuration 
+        Parameters:
+          - EC21aName
+          - EC21aInstanceType
+      - 
+        Label: 
+          default: EC2 1c Configuration 
+        Parameters:
+          - EC21cName
+          - EC21cInstanceType
+    
+Parameters:
+# ------------------------------------------------------------#
+# EC2共通論理ID:Envタグ,AMiId,キー名
+# ------------------------------------------------------------#
+  EnvType: 
+    Description: "Please type the Environment Type. Choose from dev, test, stg, prod."
+    Type: String
+    Default: "prod"
+    AllowedValues:
+      - "dev"
+      - "test"
+      - "stg"
+      - "prod"  
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    # linux2
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2    
+  KeyName:
+    Description: The EC2 Key Pair to allow SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+# ------------------------------------------------------------#
+# EC2_1a,1c論理ID:Nameタグ,インスタンスタイプ
+# ------------------------------------------------------------#
+  EC21aName: 
+    Description: "Please type the EC2 1c name. This Parameter will be a Name tag."
+    Type: String
+    Default: "CFntestEC21a"  
+  EC21aInstanceType:
+    Type: String
+    Default: "t2.micro"
+  EC21cName:
+    Description: "Please type the EC2 1c name. This Parameter will be a Name tag."
+    Type: String
+    Default: "CFntestEC21c"  
+  EC21cInstanceType:
+    Type: String
+    Default: "t2.micro"  
+
+Resources:  
+# ------------------------------------------------------------#
+# Iamロール:S3,CloudWatch,SSM,RDS
+# ------------------------------------------------------------#
+  IAMRoleForEC2:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonRDSFullAccess
+
+  InstanceProfile: 
+    Type: "AWS::IAM::InstanceProfile"
+    Properties: 
+      Path: "/"
+      Roles: 
+        - !Ref IAMRoleForEC2
+
+# ------------------------------------------------------------#
+# EC2:1a,1c
+# ------------------------------------------------------------#
+  CFntestEC21a:  
+    Type: AWS::EC2::Instance 
+    Properties:  
+      ImageId : !Ref LatestAmiId
+      InstanceType: !Ref EC21aInstanceType 
+      KeyName: !Ref KeyName
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: 'true'
+          DeviceIndex: "0"
+          GroupSet: 
+            - !ImportValue CFntest-SG-Pub-EC2
+          SubnetId: !ImportValue CFntest-Pub1aSubnet
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: 8
+      Tags:
+              - Key: EnvType 
+                Value: !Ref EnvType 
+              - Key: Name
+                Value: !Ref EC21aName
+      IamInstanceProfile: !Ref InstanceProfile  
+      UserData:
+        Fn::Base64: |
+            sudo yum -y update
+            sudo yum localinstall -y https://dev.mysql.com/get/mysql80-community-release-el7-2.noarch.rpm   
+            sudo yum install -y mysql-community-server         
+      
+  CFntestEC21c:  
+    Type: AWS::EC2::Instance 
+    Properties:  
+      ImageId : !Ref LatestAmiId
+      InstanceType: !Ref EC21cInstanceType 
+      KeyName: !Ref KeyName
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: 'true'
+          DeviceIndex: "0"
+          GroupSet: 
+            - !ImportValue CFntest-SG-Pub-EC2
+          SubnetId: !ImportValue CFntest-Pub1cSubnet
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: 8
+      Tags:
+              - Key: EnvType 
+                Value: !Ref EnvType 
+              - Key: Name
+                Value: !Ref EC21cName
+      IamInstanceProfile: !Ref InstanceProfile 
+      UserData:
+        Fn::Base64: |
+            sudo yum -y update
+            sudo yum localinstall -y https://dev.mysql.com/get/mysql80-community-release-el7-2.noarch.rpm   
+            sudo yum install -y mysql-community-server         
+
+# ------------------------------------------------------------#
+# Outputs
+# ------------------------------------------------------------#      
+Outputs:
+  CFntestEC21a:
+    Description: "EC21a Id"
+    Value: !Ref CFntestEC21a
+    Export: 
+      Name: CFntest-EC2-1a
+  CFntestEC21c:
+    Description: "EC21c Id"
+    Value: !Ref CFntestEC21c
+    Export: 
+      Name: CFntest-EC2-1c
