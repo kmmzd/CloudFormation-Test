@@ -5,7 +5,7 @@ CloudFormationテンプレートです。無料利用枠の範囲内で作成を
 番号は、スタック作成時の適用順です。
 
 ## Diagram
-![CFntest_Diagram_resize](https://user-images.githubusercontent.com/91016271/152630417-7feece09-fbe1-40bd-83f8-d8c21019fb44.png)
+![CFntest_Diagram remake2](https://user-images.githubusercontent.com/91016271/152636647-99cd0f76-ddc3-4733-acf1-2af5b444cf7b.png)
 
 ## Contents
 ### ① network/CFntestVPC.yml
