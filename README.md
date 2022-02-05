@@ -1,30 +1,33 @@
 # CloudFormation-Test
 CloudFormation sample template.  
 CloudFormationテンプレートです。無料利用枠の範囲内で作成を行います。  
-構成は、
-VPC内に配置した1台のALB、2台のEC2、1台のRDS（MySQL）となります。
+構成は、VPC内に配置した1台のALB、2台のEC2、1台のRDS（MySQL）となります。  
+番号は、スタック作成時の適用順です。
 
 ## Diagram
-![CloudFormation_Diagram drawio](https://user-images.githubusercontent.com/91016271/152478149-0341d384-cc36-4d75-af98-0b05cfe5ac37.jpg)
+![CFntest_Diagram_resize](https://user-images.githubusercontent.com/91016271/152630417-7feece09-fbe1-40bd-83f8-d8c21019fb44.png)
 
 ## Contents
-### CFntestVPC.yml
+### ① network/CFntestVPC.yml
 VPC、インターネットゲートウェイ、ルートテーブル、サブネットを作成します。
-### CFntestSG.yml
-セキュリティグループを作成します。内容は、EC2用、RDS用、ALB用の3つです。
+### ② network/CFntestSG.yml
+セキュリティグループを作成します。内容は、EC2用、RDS用、ALB用の3つです。  
 RDSのセキュリティグループは、EC2からのトラフィックのみ受け付けます。
-### CFntestEC2_IAM.yml
-EC2用のIAMロールと2台のEC2インスタンスを作成します。  
+### ③ iam/CFntestIAM.yml
+EC2用のIAMロールを作成します。  
+S3,cloudwatch,ssm,RDSのポリシーを付与します。
+### ④ compute/CFntestEC2.yml
+2台のEC2インスタンスを作成します。  
 AMIはSSMのパブリックパラメータから、常に最新のLinux2を取得します。  
 UserDataはMySQLをインストールする内容です。
-### CFntestRDS.yml
+### ⑤ compute/CFntestRDS.yml
 RDS for MySQLを作成します。  
 シングル構成のため、障害時は自動バックアップから復旧を行います。
-### CFntestELB.yml
+### ⑥ compute/CFntestELB.yml
 ALBを作成します。  
 ターゲットは、'CFntestEC2_IAM.yml'で作成した2台のEC2です。
-### CloudFormation_ServiceRole.json
-CloudFormationテンプレートではなく、IAMポリシーのテンプレートです。
+### IAMPolicy_Template/CloudFormation_ServiceRole.json
+CloudFormationテンプレートではなく、IAMポリシーのテンプレートです。  
 スタック作成時にユーザーの権限がない場合に使用します。  
 **使い方**  
 ① 当ポリシーと"PowerUserAccess"の2つからなるCloudFormation用のサービスロールを作成します。  
