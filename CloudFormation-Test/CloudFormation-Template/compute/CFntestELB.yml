@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "This template create ALB. Address type is IPv4"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - 
+        Label:
+          default: EnvType
+        Parameters: 
+          - EnvType
+      - 
+        Label:
+          default: Name Tag 
+        Parameters: 
+          - ELBName
+          - TGName        
+
+Parameters:
+# ------------------------------------------------------------#
+# 共通論理ID:Envタグ
+# ELB,TargetGroup:Nameタグ
+# ------------------------------------------------------------#
+  EnvType: 
+    Description: "Please type the Environment Type. Choose from dev,test, stg, prod."
+    Type: String
+    Default: "prod"
+    AllowedValues:
+      - "dev"
+      - "test"
+      - "stg"
+      - "prod"      
+  ELBName:
+    Description: "Please type the ELB name. This Parameter will be a Name tag."
+    Type: String
+    Default: "CFntestALB"
+  TGName:  
+    Description: "Please type the Target Group name. This Parameter will be a Name tag."
+    Type: String
+    Default: "CFntestTGALB"
+
+Resources:
+# ------------------------------------------------------------#
+# ALB
+# ------------------------------------------------------------#  
+  CFntestALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      IpAddressType: ipv4
+      Name: !Ref ELBName 
+      Scheme: internet-facing
+      SecurityGroups: 
+        - !ImportValue CFntest-SG-ELB
+      Subnets: 
+        - !ImportValue Primary-Subnet
+        - !ImportValue Secondary-Subnet
+      Tags: 
+        - Key: Name
+          Value: !Ref ELBName
+        - Key: Environment
+          Value: !Ref EnvType 
+      Type: application    
+
+# ------------------------------------------------------------#
+# Target Group for ALB
+# ------------------------------------------------------------#              
+  CFntestTGALB:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      VpcId: !ImportValue CFntest-VpcId
+      Targets: 
+        - Id: !ImportValue CFntest-EC2-1a 
+          Port: 80 
+        - Id: !ImportValue CFntest-EC2-1c
+          Port: 80
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: "/"
+      HealthCheckPort: "traffic-port"
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      HealthCheckTimeoutSeconds: 5
+      HealthCheckIntervalSeconds: 30
+      Matcher: 
+        HttpCode: 200
+      Name: !Ref TGName
+      Port: 80
+      Protocol: HTTP
+      Tags: 
+        - Key: Name
+          Value: !Ref TGName
+        - Key: EnvType
+          Value: !Ref EnvType
+      
+# ------------------------------------------------------------#
+# ALBLisner
+# ------------------------------------------------------------#  
+  CFntestALBLisner:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      DefaultActions: 
+        - TargetGroupArn: !Ref CFntestTGALB
+          Type: forward
+      LoadBalancerArn: !Ref CFntestALB
+      Port: 80
+      Protocol: HTTP

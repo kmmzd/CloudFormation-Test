@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "This template create IAM Role for EC2"
+
+Resources:
+# ------------------------------------------------------------#
+# IAMRole for EC2 instance. S3,cloudwatch,ssm,RDS.
+# ------------------------------------------------------------#
+  IAMRoleForEC2:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonRDSFullAccess
+
+Outputs:
+  IAMRoleForEC2:
+    Description: "IAMRole for EC2 instance. S3,cloudwatch,ssm,RDS. "
+    Value: !Ref IAMRoleForEC2
+    Export: 
+      Name: "IAMRole-For-EC2"
