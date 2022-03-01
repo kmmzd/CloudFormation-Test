@@ -176,6 +176,33 @@ Resources:
       GatewayId: !Ref CFntestIGw
 
 # ------------------------------------------------------------#
+# A route table that's associated with public subnet.
+# ------------------------------------------------------------#      
+  RouteTableAssciationPub1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+    RouteTableId: !Ref CFntestrt
+      SubnetId: !Ref CFntestPub1aSubnet
+
+  RouteTableAssciationPub1c:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+    RouteTableId: !Ref CFntestrt
+      SubnetId: !Ref CFntestPub1cSubnet
+
+  RouteTableAssciationPrimary:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+    RouteTableId: !Ref CFntestrt
+      SubnetId: !Ref PrimarySubnet
+
+  RouteTableAssciationSecondary:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+    RouteTableId: !Ref CFntestrt
+      SubnetId: !Ref SecondarySubnet
+
+# ------------------------------------------------------------#
 # Public Subnet 1a,1c
 # ------------------------------------------------------------#      
   CFntestPub1aSubnet:
